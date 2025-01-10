@@ -20,7 +20,7 @@ var logger = loggerFactory.CreateLogger<Program>();
 
 
 var repo = new TaxiTripRepository(connectionString, logger);
-var service = new TaxiTripService(repo, logger);
+var service = new TaxiTripService(repo, TimezoneHelper.GetEstTimeZone(), logger);
 var cvsConverter = new TaxiTripCsvConverter(logger);
 
 

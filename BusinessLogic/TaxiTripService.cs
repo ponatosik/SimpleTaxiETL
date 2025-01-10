@@ -6,12 +6,14 @@ namespace BusinessLogic;
 
 public class TaxiTripService
 {
+    private readonly TimeZoneInfo? _localTimezone;
     private readonly ILogger? _logger;
     private readonly TaxiTripRepository _repository;
 
-    public TaxiTripService(TaxiTripRepository repository, ILogger? logger = null)
+    public TaxiTripService(TaxiTripRepository repository, TimeZoneInfo? localTimezone = null, ILogger? logger = null)
     {
         _repository = repository;
+        _localTimezone = localTimezone;
         _logger = logger;
     }
 
@@ -31,10 +33,21 @@ public class TaxiTripService
                 continue;
             }
 
-            trip.StoreAndForwardFlag = !trip.StoreAndForwardFlag;
-            uniqueTrips.Add(trip);
+            uniqueTrips.Add(TransformRecord(trip));
         }
 
         await _repository.InsertRangeAsync(uniqueTrips);
+    }
+
+    private TaxiTrip TransformRecord(TaxiTrip trip)
+    {
+        trip.StoreAndForwardFlag = !trip.StoreAndForwardFlag;
+        if (_localTimezone is not null)
+        {
+            trip.PickupTime = TimeZoneInfo.ConvertTimeToUtc(trip.PickupTime, _localTimezone);
+            trip.DropOffTime = TimeZoneInfo.ConvertTimeToUtc(trip.DropOffTime, _localTimezone);
+        }
+
+        return trip;
     }
 }
